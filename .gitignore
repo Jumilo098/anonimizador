@@ -1,0 +1,15 @@
+# Area de trabajo y resultados: NUNCA se versionan (pueden contener datos de pacientes)
+.trabajo/
+reports/*
+!reports/.gitkeep
+
+# Casos sinteticos: se generan con `python -m anonimizador.casos_sinteticos`
+samples/*
+!samples/.gitkeep
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/

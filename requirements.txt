@@ -1,0 +1,20 @@
+# ANONIMIZADOR V1 - dependencias (todas locales, ninguna llama a Internet)
+streamlit>=1.30
+python-docx>=1.1
+PyMuPDF>=1.24
+pypdf>=4.0
+reportlab>=4.0
+Pillow>=10.0
+openpyxl>=3.1
+numpy>=1.26
+opencv-python-headless>=4.9   # deteccion de QR/barcodes y regiones de texto
+qrcode>=7.4                   # solo para generar los casos sinteticos de prueba
+pytest>=8.0                   # tests
+
+# OPCIONAL - OCR local. Requiere ademas instalar el binario Tesseract:
+#   Windows: https://github.com/UB-Mannheim/tesseract/wiki
+#   macOS:   brew install tesseract tesseract-lang
+#   Linux:   sudo apt install tesseract-ocr tesseract-ocr-spa
+# Sin el binario, ANONIMIZADOR funciona igual pero NO puede leer el texto
+# incrustado dentro de las imagenes (lo detecta como region y lo reporta).
+pytesseract>=0.3.10

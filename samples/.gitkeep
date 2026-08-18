@@ -1,0 +1,2 @@
+Los casos sinteticos se generan con:  python -m anonimizador.casos_sinteticos
+NUNCA guarde aqui documentos de pacientes reales.
