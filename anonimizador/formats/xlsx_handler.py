@@ -10,6 +10,8 @@ from pathlib import Path
 
 from openpyxl import Workbook, load_workbook
 
+from ..util.hashing import normalizar
+
 from ..models import Alerta, Capa, DocumentoExtraido
 from .base import ManejadorFormato, hallazgos_de_metadatos, unidad
 
@@ -61,9 +63,14 @@ class ManejadorXlsx(ManejadorFormato):
             )
             celdas = []
             for fila in hoja.iter_rows():
-                for celda in fila:
+                valores = [c.value for c in fila]
+                for pos, celda in enumerate(fila):
                     if celda.value is None:
                         continue
+                    # etiqueta de la celda de al lado: en las fichas clinicas
+                    # el par etiqueta/valor vive en columnas contiguas
+                    previa = valores[pos - 1] if pos > 0 else ""
+                    previa = str(previa) if isinstance(previa, str) else ""
                     if celda.comment is not None:
                         comentarios += 1
                         doc.unidades.append(
@@ -79,7 +86,8 @@ class ManejadorXlsx(ManejadorFormato):
                         uid = "c%d_%s" % (s, celda.coordinate)
                         doc.unidades.append(
                             unidad(uid, celda.value, Capa.HOJA_CALCULO,
-                                   "hoja[%d].%s" % (s, celda.coordinate))
+                                   "hoja[%d].%s" % (s, celda.coordinate),
+                                   etiqueta_previa=previa)
                         )
                         celdas.append({"uid": uid, "coord": celda.coordinate,
                                        "tipo": "texto"})
@@ -88,13 +96,18 @@ class ManejadorXlsx(ManejadorFormato):
                         # como unidad para poder verificar que sobreviven
                         # intactos a la reconstruccion.
                         uid = "v%d_%s" % (s, celda.coordinate)
+                        # Los numeros son intocables (son resultados), salvo
+                        # que la celta de al lado diga que es la EDAD, que si
+                        # se generaliza. La proteccion clinica sigue vigente.
+                        es_edad = normalizar(previa).strip(" :=") == "edad"
                         doc.unidades.append(
                             unidad(uid, str(celda.value), Capa.HOJA_CALCULO,
                                    "hoja[%d].%s" % (s, celda.coordinate),
-                                   editable=False)
+                                   editable=es_edad, etiqueta_previa=previa)
                         )
-                        celdas.append({"coord": celda.coordinate, "tipo": "valor",
-                                       "valor": celda.value})
+                        celdas.append({"coord": celda.coordinate,
+                                       "tipo": "valor_editable" if es_edad else "valor",
+                                       "uid": uid, "valor": celda.value})
             estructura.append({"hoja_uid": "hoja%d" % s, "titulo": hoja.title,
                                "celdas": celdas})
         wb.close()
@@ -129,7 +142,7 @@ class ManejadorXlsx(ManejadorFormato):
             hoja = wb.create_sheet(title=titulo or "Hoja")
             esperado.append(titulo)
             for celda in hoja_info["celdas"]:
-                if celda["tipo"] == "texto":
+                if celda["tipo"] in ("texto", "valor_editable"):
                     u = mapa.get(celda["uid"])
                     valor = u.texto if u else ""
                     hoja[celda["coord"]] = valor

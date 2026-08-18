@@ -233,6 +233,22 @@ class ManejadorImagen(ManejadorFormato):
                 destruidas.append({"motivo": "codigo grafico (" + c["tipo"] + ")",
                                    "caja": caja})
 
+        # Bandas fijas: en los estudios el identificador esta quemado arriba o
+        # abajo y el area clinica esta en el centro. Es una heuristica, no una
+        # garantia, y por eso queda registrada como alteracion de pixeles.
+        sup = float(getattr(opciones, "banda_superior_imagen", 0.0) or 0.0)
+        inf = float(getattr(opciones, "banda_inferior_imagen", 0.0) or 0.0)
+        if sup > 0:
+            alto = int(img.height * min(sup, 0.45))
+            dibujo.rectangle((0, 0, img.width, alto), fill=(0, 0, 0))
+            destruidas.append({"motivo": "banda superior (%.0f%% de la altura)" % (sup * 100),
+                               "caja": (0, 0, img.width, alto)})
+        if inf > 0:
+            alto = int(img.height * min(inf, 0.45))
+            dibujo.rectangle((0, img.height - alto, img.width, img.height), fill=(0, 0, 0))
+            destruidas.append({"motivo": "banda inferior (%.0f%% de la altura)" % (inf * 100),
+                               "caja": (0, img.height - alto, img.width, img.height)})
+
         redactar = bool(opciones and getattr(opciones, "redactar_regiones_imagen", False))
         regiones = extraido.info.get("regiones_texto", [])
         if redactar:

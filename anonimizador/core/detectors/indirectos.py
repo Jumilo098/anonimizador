@@ -9,7 +9,7 @@ import re
 
 from ...models import Capa, Categoria, Confianza, Hallazgo
 from ...resources import lexicos as LX
-from ...util.texto import plegar
+from ...util.texto import patron_sin_tildes, plegar
 
 DETECTOR = "indirectos"
 
@@ -69,15 +69,31 @@ RE_OCUPACION_ETIQUETA = re.compile(
     re.IGNORECASE,
 )
 
+# Los prefijos se convierten en patrones tolerantes a tildes y mayusculas:
+# en los documentos reales aparece "CENTRO CLINICO", "Centro Clínico", etc.
 _INST_RE = "|".join(
-    re.escape(p) for p in sorted(LX.PREFIJOS_INSTITUCION, key=len, reverse=True)
+    patron_sin_tildes(p)
+    for p in sorted(LX.PREFIJOS_INSTITUCION, key=len, reverse=True)
 )
 RE_INSTITUCION = re.compile(
-    # [ \t]+ y no \s+: el nombre de una institucion no cruza saltos de linea
-    r"(?<![a-zA-Z])(?P<pref>(?i:" + _INST_RE + r"))\.?[ \t]+"
-    r"(?P<nombre>(?:(?i:de|del|la|las|los|san|santa|santo)[ \t]+)?"
-    r"[A-ZÁ-Ú][\wÁ-ÿ]*(?:[ \t]+(?:(?i:de|del|la|las|los|y)[ \t]+)?[A-ZÁ-Ú][\wÁ-ÿ]*){0,3})",
+    # [ \t] simple y no \s+: el nombre de una institucion no cruza saltos de
+    # linea NI dos espacios seguidos (en un PDF eso es el salto a otra columna,
+    # y por ahi se colaba la etiqueta del campo siguiente: "EPS   Correo:").
+    r"(?<![a-zA-Z])(?P<pref>(?i:" + _INST_RE + r"))\.?[ \t]"
+    r"(?P<nombre>(?:(?i:de|del|la|las|los|san|santa|santo)[ \t])?"
+    r"(?:[A-ZÁ-Ú][\wÁ-ÿ]*|[A-ZÁ-Ú]{3,})"
+    r"(?:[ \t](?:(?i:de|del|la|las|los|y)[ \t])?(?:[A-ZÁ-Ú][\wÁ-ÿ]*|[A-ZÁ-Ú]{3,})){0,3})",
 )
+
+# Etiquetas de campo: si el "nombre" capturado es una de estas, no es el
+# nombre de la institucion, es el campo siguiente del formulario.
+ETIQUETAS_DE_CAMPO = {
+    "correo", "email", "telefono", "tel", "celular", "fecha", "hora", "orden",
+    "documento", "cedula", "historia", "paciente", "edad", "sexo", "ocupacion",
+    "direccion", "municipio", "ciudad", "sede", "asegurador", "aseguradora",
+    "poliza", "afiliado", "resultado", "referencia", "observaciones", "nombre",
+    "apellidos", "servicio", "medico", "profesional", "registro", "firma",
+}
 
 _ASEG_RE = "|".join(re.escape(a) for a in sorted(LX.ASEGURADORAS, key=len, reverse=True))
 RE_ASEGURADORA = re.compile(
@@ -149,12 +165,20 @@ def detectar(unidad, spans_clinicos=None) -> list:
     for m in RE_OCUPACION.finditer(pl):
         if any(h.inicio < m.end() and m.start() < h.fin for h in out):
             continue
-        # "medico tratante" ya lo cubre el detector de nombres; aqui es ocupacion
-        out.append(_mk(unidad, "ocupacion", texto, m.start(), m.end(), Confianza.MEDIA,
-                       "termino de ocupacion en texto libre"))
+        # OJO: en texto libre estas palabras suelen ser ADJETIVOS, no la
+        # ocupacion del paciente ("consulta MEDICA", "Red MEDICA", "junta
+        # MEDICA"). Sustituirlas por el sector destroza el documento, asi que
+        # solo se marcan: la decision es humana.
+        out.append(_mk(unidad, "posible_ocupacion", texto, m.start(), m.end(),
+                       Confianza.BAJA,
+                       "termino de ocupacion en texto libre: puede ser un "
+                       "adjetivo y no la ocupacion de una persona"))
 
     # --- institucion ------------------------------------------------------
     for m in RE_INSTITUCION.finditer(texto):
+        primera = plegar(m.group("nombre")).split()[0] if m.group("nombre") else ""
+        if primera.strip(":.,") in ETIQUETAS_DE_CAMPO:
+            continue   # es la etiqueta del campo siguiente, no el nombre
         out.append(_mk(unidad, "institucion", texto, m.start(), m.end(),
                        Confianza.ALTA))
 

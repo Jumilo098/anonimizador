@@ -137,11 +137,14 @@ DEPARTAMENTOS = {
 # ---------------------------------------------------------------------------
 # 4. INSTITUCIONES Y ASEGURADORAS
 # ---------------------------------------------------------------------------
+# OJO: cada prefijo debe ser inequivoco. "clinico" o "sede" a secas producen
+# falsos positivos que destrozan el texto ("DOCUMENTO CLINICO SINTETICO" se
+# convertia en "DOCUMENTO institucion de salud").
 PREFIJOS_INSTITUCION = [
-    "hospital universitario", "hospital", "clinica", "policlinico",
-    "sanatorio", "instituto", "centro medico", "centro de salud", "fundacion",
-    "laboratorio clinico", "laboratorio", "ips", "eps", "unidad medica",
-    "consultorio",
+    "hospital universitario", "hospital", "centro clinico", "centro medico",
+    "centro de salud", "centro de diagnostico", "clinica", "policlinico",
+    "sanatorio", "instituto", "fundacion", "laboratorio clinico",
+    "laboratorio", "ips", "eps", "unidad medica", "consultorio",
 ]
 
 ASEGURADORAS = {

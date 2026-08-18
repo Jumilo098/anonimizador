@@ -96,6 +96,12 @@ with st.sidebar:
         "Redactar TODAS las regiones con aspecto de texto en imagenes", value=False,
         help="Apagado por defecto: sin OCR no se puede saber si esa region es "
              "informacion clinica. Encenderlo puede tapar parte de la imagen.")
+    bandas = st.checkbox(
+        "Borrar la banda superior e inferior de las imagenes (10%)", value=False,
+        help="En endoscopia, ecografia o radiologia el nombre del paciente casi "
+             "siempre esta quemado en esas franjas y el area clinica esta en el "
+             "centro. Es una heuristica util, no una garantia: revise el "
+             "resultado.")
     posibles_nombres = st.checkbox(
         "Sustituir tambien candidatos a nombre de baja confianza", value=False,
         help="Apagado por defecto: podria borrar un termino clinico que no este "
@@ -126,6 +132,8 @@ opciones = Opciones(
     finalidad=finalidad,
     eliminar_qr=eliminar_qr,
     redactar_regiones_imagen=redactar_regiones,
+    banda_superior_imagen=0.10 if bandas else 0.0,
+    banda_inferior_imagen=0.10 if bandas else 0.0,
     sustituir_posibles_nombres=posibles_nombres,
 )
 

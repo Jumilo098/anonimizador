@@ -232,6 +232,8 @@ def procesar(origen, nombre_original=None, opciones=None) -> ResultadoPipeline:
             "eliminar_qr": opciones.eliminar_qr,
             "sustituir_posibles_nombres": getattr(
                 opciones, "sustituir_posibles_nombres", False),
+            "banda_superior_imagen": getattr(opciones, "banda_superior_imagen", 0.0),
+            "banda_inferior_imagen": getattr(opciones, "banda_inferior_imagen", 0.0),
         },
         "nombre_original": ej.nombre_original,
         "formato": ext,

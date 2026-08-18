@@ -13,7 +13,9 @@ PRIORIDAD = {
     "nombre_persona": 10, "nombre_profesional": 10,
     "fecha_nacimiento": 11, "institucion": 14, "aseguradora": 16,
     "fecha": 18, "ocupacion": 20, "localidad": 22, "edad": 24,
+    "empleador": 13,
     "posible_nombre": 40, "campo_identificador_dudoso": 45,
+    "posible_ocupacion": 42,
 }
 PRIORIDAD_POR_DEFECTO = 50
 

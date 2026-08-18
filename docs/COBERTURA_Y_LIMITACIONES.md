@@ -42,7 +42,7 @@ Entorno de verificación: Windows 11, Python 3.12.4, sin Tesseract instalado.
 | 1. Directos | `IMPLEMENTADO` | Correo, URL, IP, usuario de red, documento de identidad (CC/TI/CE/NIT/DNI/RUT/CURP/pasaporte), historia clínica, números administrativos (orden, autorización, factura, póliza, afiliado, cama…), teléfono etiquetado y teléfono móvil, dirección postal, código postal, firma/registro médico, nombres por etiqueta (`Paciente:`, `Acompañante:`, `Madre:`, `Elaborado por:`…), nombres tras tratamiento (`Dr.`, `Dra.`, `Lic.`) y nombres por léxico. |
 | 2. Indirectos | `IMPLEMENTADO` | Edad exacta, fecha de nacimiento, fechas, ocupación/cargo, institución (hospital, clínica, IPS, laboratorio…), aseguradora/EPS, localidad y departamento. |
 | 3. Contextuales | `PARCIAL` | Se puntúa la **combinación residual** de cuasi-identificadores y se alerta a partir de un umbral. **No** hay cálculo de k-anonimato ni contraste contra un padrón poblacional. |
-| 4. Visuales | `PARCIAL` | QR y códigos de barras: detección y **destrucción real** de píxeles, con verificación posterior. Regiones con aspecto de texto: detección morfológica. **Leer** ese texto requiere OCR (ver abajo). Logos y firmas manuscritas: no se reconocen como tales. |
+| 4. Visuales | `PARCIAL` | QR y códigos de barras: detección y **destrucción real** de píxeles, con verificación posterior. Regiones con aspecto de texto: detección morfológica. **Leer** ese texto requiere OCR (ver abajo). Como salida práctica se puede borrar la banda superior/inferior de la imagen, donde suele estar quemado el identificador. Logos y firmas manuscritas: no se reconocen como tales. |
 | 5. Técnicos | `IMPLEMENTADO` | Nombre del archivo, propiedades core/app/custom de OOXML, comentarios y sus autores, control de cambios y sus autores, relaciones externas, notas al pie, metadatos y XMP de PDF, anotaciones, campos de formulario, archivos embebidos, marcadores activos (`/JavaScript`, `/OpenAction`, `/Launch`…), EXIF y chunks de texto de PNG, propiedades de XLSX. |
 
 ### Formatos
@@ -167,7 +167,7 @@ y de gobierno del dato que no le corresponden a una herramienta.
 ## Cómo comprobar usted mismo lo que dice este documento
 
 ```bash
-python -m pytest tests -q          # 37 pruebas
+python -m pytest tests -q          # 49 pruebas
 python -m anonimizador.cli --demo  # procesa los 5 casos sintéticos e imprime los veredictos
 ```
 

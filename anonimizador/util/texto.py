@@ -40,6 +40,32 @@ def fusionar_spans(spans):
     return salida
 
 
+_EQUIVALENTES = {
+    "a": "aáàäâãAÁÀÄÂÃ", "e": "eéèëêEÉÈËÊ", "i": "iíìïîIÍÌÏÎ",
+    "o": "oóòöôõOÓÒÖÔÕ", "u": "uúùüûUÚÙÜÛ", "n": "nñNÑ", "c": "cçCÇ",
+}
+
+
+def patron_sin_tildes(frase: str) -> str:
+    """'centro clinico' -> patron que casa 'CENTRO CLÍNICO' y 'Centro Clinico'.
+
+    Los lexicos se escriben sin tildes para poder leerlos y mantenerlos, pero
+    los documentos reales vienen acentuados y en mayusculas.
+    """
+    salida = []
+    for ch in frase:
+        base = ch.lower()
+        if base in _EQUIVALENTES:
+            salida.append("[" + _EQUIVALENTES[base] + "]")
+        elif base.isalpha():
+            salida.append("[" + base + base.upper() + "]")
+        elif base == " ":
+            salida.append(r"[ \t]+")
+        else:
+            salida.append(re.escape(ch))
+    return "".join(salida)
+
+
 _PALABRA = re.compile(r"[A-Za-zÁ-ÿ][A-Za-zÁ-ÿ'-]*", re.UNICODE)
 
 

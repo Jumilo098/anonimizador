@@ -123,11 +123,17 @@ class ManejadorDocx(ManejadorFormato):
                 filas = []
                 for f, fila in enumerate(hijo.findall(W + "tr")):
                     celdas = []
+                    textos = [_texto_elemento(c) for c in fila.findall(W + "tc")]
                     for c, celda in enumerate(fila.findall(W + "tc")):
                         uid = "t%d_%d_%d" % (idx, f, c)
+                        # En las fichas clinicas el par etiqueta/valor vive en
+                        # celdas distintas ("Municipio" | "Villa Robleda"), asi
+                        # que la etiqueta de la celda anterior viaja como
+                        # contexto para que el detector pueda usarla.
                         doc.unidades.append(
-                            unidad(uid, _texto_elemento(celda), Capa.TABLA,
-                                   "tabla[%d].celda[%d,%d]" % (idx, f, c))
+                            unidad(uid, textos[c], Capa.TABLA,
+                                   "tabla[%d].celda[%d,%d]" % (idx, f, c),
+                                   etiqueta_previa=textos[c - 1] if c > 0 else "")
                         )
                         celdas.append(uid)
                     filas.append(celdas)

@@ -137,6 +137,7 @@ Dentro de cada carpeta de `reports/`:
 python -m anonimizador.cli documento.docx
 python -m anonimizador.cli *.pdf --finalidad publicacion
 python -m anonimizador.cli documento.pdf --solo-analizar
+python -m anonimizador.cli estudio.png --bandas-imagen 0.10
 python -m anonimizador.cli --demo        # genera y procesa los casos sintéticos
 python -m anonimizador.cli --limpiar     # borra las copias de trabajo
 ```
@@ -147,7 +148,10 @@ python -m anonimizador.cli --limpiar     # borra las copias de trabajo
 
 Sin OCR, ANONIMIZADOR **detecta** que hay texto dentro de una imagen pero **no puede leerlo**,
 así que no lo borra automáticamente (podría estar tapando información clínica) y sube el riesgo
-residual a MODERADO. Para activarlo instale el motor Tesseract:
+residual a MODERADO. Mientras tanto tiene dos salidas manuales: la casilla **“Borrar la banda
+superior e inferior”** (en endoscopia, ecografía o radiología el nombre casi siempre está
+quemado ahí y el área clínica está en el centro) y la de **redactar todas las regiones**
+detectadas. Para activarlo instale el motor Tesseract:
 
 - **Windows**: <https://github.com/UB-Mannheim/tesseract/wiki> (marque el idioma español)
 - **macOS**: `brew install tesseract tesseract-lang`
@@ -163,7 +167,7 @@ La barra lateral le dirá si lo detectó.
 python -m pytest tests -q
 ```
 
-37 pruebas: que los identificadores desaparecen (incluso del XML interno de un DOCX), que
+49 pruebas: que los identificadores desaparecen (incluso del XML interno de un DOCX), que
 `Hemoglobina: 8.9 g/dL` sale exactamente igual, que `colon ascendente` no se convierte en otra
 cosa, que los metadatos se saneen, que el original queda intacto, que un cambio clínico
 inesperado produce `FAIL` y que la prueba adversarial caza una fuga inyectada a propósito.

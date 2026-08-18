@@ -160,8 +160,10 @@ MOTIVOS = {
     "ocupacion": "minimizacion: se conserva el sector",
     "institucion": "identificador indirecto de contexto",
     "aseguradora": "identificador indirecto administrativo",
+    "empleador": "identificador indirecto: el empleador singulariza",
     "localidad": "minimizacion: se conserva la region",
     "posible_nombre": "candidato incierto: requiere criterio humano",
+    "posible_ocupacion": "puede ser un adjetivo y no la ocupacion de una persona",
     "campo_identificador_dudoso": "campo etiquetado no clasificable",
 }
 
@@ -244,6 +246,9 @@ class Politica:
         if tipo == "aseguradora":
             return Accion.SUSTITUIR, "[ASEGURADORA]", motivo, False
 
+        if tipo == "empleador":
+            return Accion.SUSTITUIR, "[EMPLEADOR]", motivo, False
+
         if tipo == "localidad":
             region = LX.region_de(texto)
             if not self.finalidad.generalizar_lugar:
@@ -252,7 +257,8 @@ class Politica:
                 return Accion.GENERALIZAR, region, motivo, False
             return Accion.SUSTITUIR, "[LOCALIDAD]", motivo + " (region desconocida)", True
 
-        if tipo in ("posible_nombre", "campo_identificador_dudoso"):
+        if tipo in ("posible_nombre", "campo_identificador_dudoso",
+                    "posible_ocupacion"):
             sustituir = bool(getattr(self.opciones, "sustituir_posibles_nombres", False))
             if sustituir:
                 etq = self.seudonimos.etiqueta("PERSONA", texto)

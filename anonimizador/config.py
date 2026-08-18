@@ -133,6 +133,11 @@ class Opciones:
 
     finalidad: str = FINALIDAD_POR_DEFECTO
     redactar_regiones_imagen: bool = False   # destruir pixeles de regiones detectadas
+    # Bandas superior/inferior de la imagen a borrar sin preguntar. En los
+    # estudios (endoscopia, ecografia, radiologia) el nombre del paciente casi
+    # siempre esta quemado ahi, y el area clinica esta en el centro. 0 = apagado.
+    banda_superior_imagen: float = 0.0
+    banda_inferior_imagen: float = 0.0
     eliminar_qr: bool = True                 # los QR/barcodes SI se destruyen
     # Sustituir candidatos a nombre de baja confianza. APAGADO por defecto:
     # borrar a ciegas una palabra capitalizada puede destrozar un termino

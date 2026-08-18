@@ -6,6 +6,7 @@ archivo. Si reaparece algo que se suponia eliminado -> FAIL.
 """
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 from ...models import Accion, Alerta
@@ -106,7 +107,7 @@ def escanear(ruta_resultado, manejador, transformaciones, valores_originales=Non
         h = hash_hallazgo(texto)
         if h not in esperados_fuera:
             continue
-        if plegar(texto) in texto_plano:
+        if _aparece(texto, texto_plano):
             t = esperados_fuera[h]
             informe["fugas"].append({
                 "tipo": t.tipo,
@@ -120,7 +121,10 @@ def escanear(ruta_resultado, manejador, transformaciones, valores_originales=Non
     # 4) deteccion desde cero sobre el resultado
     hallazgos, _ = detectar_documento(extraido.unidades)
     for h in hallazgos:
-        if h.tipo in ("posible_nombre", "campo_identificador_dudoso"):
+        # Estos tipos son marcas de baja confianza que el propio pipeline deja
+        # a proposito para revision humana; no son fugas del resultado.
+        if h.tipo in ("posible_nombre", "campo_identificador_dudoso",
+                      "posible_ocupacion"):
             continue
         if _es_marcador(h.texto) or es_generado(h.texto):
             continue
@@ -211,3 +215,19 @@ def _metadato_neutro(clave: str, valor: str) -> bool:
 def _es_marcador(texto: str) -> bool:
     t = (texto or "").strip()
     return t.startswith("[") and t.endswith("]")
+
+
+def _aparece(valor: str, texto_plegado: str) -> bool:
+    """¿El identificador reaparece REALMENTE en el resultado?
+
+    Con `in` a secas, un valor corto como la ciudad "Cali" daba positivo dentro
+    de "localizado" o incluso dentro de nuestro propio marcador "[LOCALIDAD]".
+    Se exige que el valor aparezca como palabra completa.
+    """
+    v = plegar(valor).strip()
+    if not v:
+        return False
+    # se ignora lo que este dentro de un marcador nuestro: [PACIENTE], [LOCALIDAD]...
+    limpio = re.sub(r"\[[^\]]{0,60}\]", " ", texto_plegado)
+    patron = r"(?<![0-9a-z])" + re.escape(v) + r"(?![0-9a-z])"
+    return re.search(patron, limpio) is not None

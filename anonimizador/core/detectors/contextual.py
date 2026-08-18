@@ -19,10 +19,12 @@ PESOS = {
     "localidad": 2,
     "institucion": 2,
     "aseguradora": 1,
+    "empleador": 2,
     "fecha": 1,
     "sexo": 1,
     "posible_nombre": 3,
     "campo_identificador_dudoso": 2,
+    "posible_ocupacion": 1,
 }
 
 UMBRAL_MODERADO = 4

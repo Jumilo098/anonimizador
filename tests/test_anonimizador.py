@@ -409,6 +409,130 @@ def test_archivo_vacio_se_rechaza(tmp_path):
     assert r.ok is False
 
 
+# ---------------------------------------------------------------------------
+# Regresiones halladas comparando contra otra herramienta sobre los mismos
+# documentos. Cada una corresponde a un defecto real que ya se corrigio.
+# ---------------------------------------------------------------------------
+def _procesar_texto(tmp_path, contenido, nombre="nota.txt"):
+    origen = tmp_path / nombre
+    origen.write_text(contenido, encoding="utf-8")
+    r = pipeline.procesar(origen)
+    assert r.ok, r.error
+    return r, Path(r.archivos["resultado"]).read_text(encoding="utf-8")
+
+
+def test_regresion_identificador_alfanumerico(tmp_path):
+    """No todos los documentos son numericos: CC-DEMO-640317, HC-2026-0417."""
+    r, salida = _procesar_texto(
+        tmp_path,
+        "Paciente: Mauricio Londono\nDocumento: CC-DEMO-640317\n"
+        "Historia clinica: HC-DEMO-2026-0417\nHemoglobina: 8.9 g/dL\n",
+    )
+    assert "CC-DEMO-640317" not in salida
+    assert "HC-DEMO-2026-0417" not in salida
+    assert "8.9 g/dL" in salida
+
+
+def test_regresion_no_corrompe_titulos_con_palabras_de_ocupacion(tmp_path):
+    """'MEDICA' en un titulo es un adjetivo, no la ocupacion del paciente."""
+    r, salida = _procesar_texto(
+        tmp_path,
+        "NOTA DE CONSULTA MEDICA INICIAL\nRed Medica en Inteligencia Artificial\n"
+        "Junta medica del servicio.\nHemoglobina: 8.9 g/dL\n",
+    )
+    assert "NOTA DE CONSULTA MEDICA INICIAL" in salida
+    assert "Red Medica" in salida
+    assert "sector salud" not in salida
+
+
+def test_regresion_ocupacion_etiquetada_si_se_generaliza(tmp_path):
+    """Con etiqueta explicita si es la ocupacion de la persona: se generaliza."""
+    r, salida = _procesar_texto(tmp_path, "Ocupacion: docente\nPeso: 61.5 kg\n")
+    assert "docente" not in salida
+    assert "sector educacion" in salida
+    assert "61.5 kg" in salida
+
+
+def test_regresion_institucion_en_mayusculas_y_con_tildes(tmp_path):
+    r, salida = _procesar_texto(
+        tmp_path,
+        "CENTRO CLINICO VALLE CLARO - DEMO\nHospital Universitario San Rafael\n"
+        "Creatinina: 0.9 mg/dL\n",
+    )
+    assert "VALLE CLARO" not in salida
+    assert "San Rafael" not in salida
+    assert "0.9 mg/dL" in salida
+
+
+def test_regresion_no_se_come_la_etiqueta_del_campo_siguiente(tmp_path):
+    """'EPS: Sanitas   Correo: x@y.co' -> no debe borrar la palabra 'Correo'."""
+    r, salida = _procesar_texto(
+        tmp_path, "Asegurador: Sanitas   Correo: paciente@ejemplo.co\n"
+    )
+    assert "Correo" in salida
+    assert "paciente@ejemplo.co" not in salida
+
+
+def test_regresion_documento_clinico_no_es_una_institucion(tmp_path):
+    r, salida = _procesar_texto(tmp_path, "DOCUMENTO CLINICO SINTETICO - EDUCATIVO\n")
+    assert "DOCUMENTO CLINICO SINTETICO" in salida
+
+
+def test_regresion_cedula_no_se_clasifica_como_ip(tmp_path):
+    r, salida = _procesar_texto(tmp_path, "Documento: CC 1.094.556.231\n")
+    assert "1.094.556.231" not in salida
+    tipos = {t.tipo for t in r.transformaciones}
+    assert "ip" not in tipos, "una cedula agrupada no es una direccion IP"
+
+
+def test_regresion_firma_por_nombre_completo(tmp_path):
+    r, salida = _procesar_texto(
+        tmp_path, "Firmado digitalmente por: Claudia Restrepo Arias\n"
+    )
+    assert "Restrepo" not in salida
+    assert "Arias" not in salida
+
+
+def test_regresion_campos_etiquetados_sin_lexico(tmp_path):
+    """Empleador y municipio identifican aunque no esten en ningun lexico."""
+    r, salida = _procesar_texto(
+        tmp_path,
+        "Empleador: Institucion Educativa Horizonte Andino\n"
+        "Municipio: Villa Robleda\nTemperatura: 36.5 C\n",
+    )
+    assert "Horizonte Andino" not in salida
+    assert "Villa Robleda" not in salida
+    assert "36.5 C" in salida
+
+
+def test_regresion_campo_etiquetado_no_pisa_lo_clinico(tmp_path):
+    """Si el valor del campo es clinico, el campo NO se borra."""
+    r, salida = _procesar_texto(
+        tmp_path, "Institucion: colon ascendente con lesion\n"
+    )
+    assert "colon ascendente" in salida
+
+
+def test_regresion_adversarial_no_confunde_subcadenas(tmp_path):
+    """'Cali' dentro de 'localizado' o de '[LOCALIDAD]' NO es una fuga."""
+    r, salida = _procesar_texto(
+        tmp_path,
+        "Paciente atendido en Cali.\nDolor abdominal poco localizado.\n"
+        "Hemoglobina: 8.9 g/dL\n",
+    )
+    assert r.adversarial["fugas"] == [], r.adversarial["fugas"]
+    assert "localizado" in salida
+
+
+def test_regresion_adversarial_si_detecta_una_fuga_real(tmp_path):
+    """El arreglo anterior no puede dejar ciego al escaner."""
+    from anonimizador.core.validators.adversarial import _aparece
+    from anonimizador.util.texto import plegar
+
+    assert _aparece("Cali", plegar("El paciente vive en Cali."))
+    assert not _aparece("Cali", plegar("Dolor poco localizado. [LOCALIDAD]"))
+
+
 def test_pdf_escaneado_se_marca_no_evaluable(tmp_path):
     """Un PDF sin texto extraible NO puede pasar por bueno."""
     from PIL import Image, ImageDraw

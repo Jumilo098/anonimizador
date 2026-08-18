@@ -53,6 +53,9 @@ def main(argv=None):
     p.add_argument("--solo-analizar", action="store_true",
                    help="no genera nada: solo informa que encontro")
     p.add_argument("--redactar-regiones-imagen", action="store_true")
+    p.add_argument("--bandas-imagen", type=float, default=0.0, metavar="FRACCION",
+                   help="borra esa fraccion superior e inferior de cada imagen "
+                        "(p. ej. 0.10); ahi suele estar quemado el nombre")
     p.add_argument("--sin-eliminar-qr", action="store_true")
     p.add_argument("--limpiar", action="store_true",
                    help="elimina las copias de trabajo y termina")
@@ -74,6 +77,8 @@ def main(argv=None):
     opciones = Opciones(
         finalidad=args.finalidad,
         redactar_regiones_imagen=args.redactar_regiones_imagen,
+        banda_superior_imagen=args.bandas_imagen,
+        banda_inferior_imagen=args.bandas_imagen,
         eliminar_qr=not args.sin_eliminar_qr,
     )
 
