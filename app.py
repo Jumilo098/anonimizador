@@ -107,7 +107,21 @@ with st.sidebar:
         help="Apagado por defecto: podria borrar un termino clinico que no este "
              "en el lexico (una marca comercial, un epinimo).")
 
-    st.header("3. Privacidad")
+    st.header("3. Entrega")
+    autor_salida = st.text_input(
+        "Autor que quedara en el archivo (opcional)", value="",
+        help="Identifica a QUIEN PREPARO el material, no al paciente. Se reporta "
+             "como autoria declarada en la auditoria. Dejelo vacio si no lo necesita.")
+    nombre_salida = st.text_input(
+        "Nombre del archivo generado", value="documento_desidentificado",
+        help="Debe ser neutro: el nombre del archivo es una capa mas donde se filtra "
+             "el nombre del paciente.")
+    estampar = st.checkbox(
+        "Estampar el aviso dentro del documento", value=True,
+        help="Escribe VERSION MINIMIZADA SUJETA A REVISION Y APROBACION HUMANA "
+             "dentro del archivo, visible al abrirlo.")
+
+    st.header("4. Privacidad")
     st.success("Procesamiento 100% local. Sin nube, sin API externa, sin telemetria.")
     hay_ocr, detalle_ocr = ocr_disponible()
     if hay_ocr:
@@ -331,6 +345,10 @@ for nombre, r in resultados.items():
         if adv.get("identificadores_residuales"):
             st.warning("Elementos que el reanalisis no pudo descartar")
             st.dataframe(adv["identificadores_residuales"], use_container_width=True)
+        if adv.get("autoria_declarada"):
+            st.info("Autoria declarada: se escribio un autor en las propiedades del "
+                    "archivo. Identifica a quien preparo el material, no al paciente.")
+            st.json(adv["autoria_declarada"])
         if adv.get("metadatos_residuales"):
             st.warning("Metadatos residuales")
             st.json(adv["metadatos_residuales"])

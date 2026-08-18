@@ -6,7 +6,12 @@ from pathlib import Path
 from ..config import MAX_TEXT_CHARS
 from ..models import Capa, DocumentoExtraido
 from ..util.safety import leer_texto
-from .base import ManejadorFormato, hallazgos_de_metadatos, unidad
+from .base import (
+    ManejadorFormato,
+    aviso_documento,
+    hallazgos_de_metadatos,
+    unidad,
+)
 
 
 class ManejadorTexto(ManejadorFormato):
@@ -31,6 +36,9 @@ class ManejadorTexto(ManejadorFormato):
     def reconstruir(self, extraido, unidades_nuevas, destino: Path, contexto=None):
         cuerpo = next((u for u in unidades_nuevas if u.uid == "cuerpo"), None)
         texto = cuerpo.texto if cuerpo else ""
+        aviso = aviso_documento(getattr(contexto, "opciones", None))
+        if aviso:
+            texto = aviso + "\n\n" + texto
         destino = Path(destino)
         destino.write_text(texto, encoding="utf-8")
         return {

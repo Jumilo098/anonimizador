@@ -167,7 +167,7 @@ La barra lateral le dirá si lo detectó.
 python -m pytest tests -q
 ```
 
-49 pruebas: que los identificadores desaparecen (incluso del XML interno de un DOCX), que
+54 pruebas: que los identificadores desaparecen (incluso del XML interno de un DOCX), que
 `Hemoglobina: 8.9 g/dL` sale exactamente igual, que `colon ascendente` no se convierte en otra
 cosa, que los metadatos se saneen, que el original queda intacto, que un cambio clínico
 inesperado produce `FAIL` y que la prueba adversarial caza una fuga inyectada a propósito.
@@ -213,6 +213,9 @@ anonimizador/
 - **`docs/COBERTURA_Y_LIMITACIONES.md`** — qué funciona hoy (`IMPLEMENTADO`), qué funciona a
   medias (`PARCIAL`) y qué solo está diseñado (`NO IMPLEMENTADO`).
 - **`docs/INFORME_ANONIMIZADOR.md`** — explicación completa para profesionales de la salud.
+- **`docs/PROTOCOLO_ANTES_PROMPT.md`** — el protocolo ANTES como prompt operativo, auditado:
+  qué puede hacer un chat, qué no, y por qué la parte invisible del archivo necesita la
+  herramienta local.
 
 Ambos están también en **PDF** (`docs/*.pdf`). Se regeneran localmente, sin Internet, con:
 

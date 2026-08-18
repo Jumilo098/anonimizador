@@ -3,8 +3,23 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from ..config import AVISO_EN_DOCUMENTO, AVISO_EN_DOCUMENTO_SINTETICO
 from ..models import Alerta, Capa, Categoria, Confianza, Hallazgo, UnidadTexto
 from ..util.hashing import enmascarar
+
+
+def aviso_documento(opciones) -> str:
+    """Sello visible que se escribe DENTRO del archivo generado.
+
+    Nunca afirma anonimizacion, irreversibilidad ni riesgo cero: solo dice que
+    es una version minimizada y que falta la aprobacion de una persona.
+    """
+    if opciones is not None and not getattr(opciones, "estampar_aviso", True):
+        return ""
+    finalidad = getattr(opciones, "finalidad", "") if opciones else ""
+    if finalidad == "docencia_sintetica":
+        return AVISO_EN_DOCUMENTO_SINTETICO
+    return AVISO_EN_DOCUMENTO
 
 # Campos de metadatos que casi siempre identifican
 CAMPOS_SENSIBLES = {

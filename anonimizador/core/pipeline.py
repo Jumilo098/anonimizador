@@ -31,7 +31,7 @@ from ..models import (
 )
 from ..util import workspace
 from ..util.hashing import enmascarar, hash_hallazgo, sha256_archivo
-from ..util.safety import ArchivoRechazado, detectar_formato
+from ..util.safety import ArchivoRechazado, detectar_formato, sanear_nombre
 from .auditors import audit
 from .detectors import contextual, detectar_documento
 from .risk import scoring
@@ -147,7 +147,10 @@ def procesar(origen, nombre_original=None, opciones=None) -> ResultadoPipeline:
     alertas.extend(aluc.get("alertas", []))
 
     # --- 6. reconstruccion ------------------------------------------------
-    destino = ej.dir_reporte / (NOMBRE_SALIDA + ext)
+    base_salida = sanear_nombre(
+        str(getattr(opciones, "nombre_salida", "") or NOMBRE_SALIDA)
+    ) or NOMBRE_SALIDA
+    destino = ej.dir_reporte / (Path(base_salida).stem + ext)
     ctx = Contexto(copia=ej.copia, opciones=opciones, ejecucion=ej)
     try:
         info_recon = manejador.reconstruir(extraido, unidades_nuevas, destino, ctx)
@@ -189,6 +192,7 @@ def procesar(origen, nombre_original=None, opciones=None) -> ResultadoPipeline:
     adv, alertas_adv = adversarial.escanear(
         destino, manejador, transformaciones, valores_originales,
         valores_generados=[c.get("nuevo", "") for c in cambios],
+        autor_declarado=str(getattr(opciones, "autor_salida", "") or ""),
     )
     alertas.extend(alertas_adv)
 

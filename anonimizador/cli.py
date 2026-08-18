@@ -57,6 +57,13 @@ def main(argv=None):
                    help="borra esa fraccion superior e inferior de cada imagen "
                         "(p. ej. 0.10); ahi suele estar quemado el nombre")
     p.add_argument("--sin-eliminar-qr", action="store_true")
+    p.add_argument("--autor", default="", metavar="NOMBRE",
+                   help="autor que quedara en las propiedades del archivo generado; "
+                        "identifica a quien lo preparo, no al paciente")
+    p.add_argument("--nombre-salida", default="documento_desidentificado",
+                   metavar="NOMBRE", help="nombre neutro del archivo generado")
+    p.add_argument("--sin-aviso", action="store_true",
+                   help="no estampar el aviso dentro del documento")
     p.add_argument("--limpiar", action="store_true",
                    help="elimina las copias de trabajo y termina")
     p.add_argument("--version", action="version", version="ANONIMIZADOR " + __version__)
@@ -80,6 +87,9 @@ def main(argv=None):
         banda_superior_imagen=args.bandas_imagen,
         banda_inferior_imagen=args.bandas_imagen,
         eliminar_qr=not args.sin_eliminar_qr,
+        autor_salida=args.autor,
+        nombre_salida=args.nombre_salida,
+        estampar_aviso=not args.sin_aviso,
     )
 
     print(AVISO_PERMANENTE)

@@ -14,9 +14,15 @@ from pathlib import Path
 from xml.etree import ElementTree as ET
 
 from docx import Document
+from docx.shared import Pt
 
 from ..models import Alerta, Capa, DocumentoExtraido
-from .base import ManejadorFormato, hallazgos_de_metadatos, unidad
+from .base import (
+    ManejadorFormato,
+    aviso_documento,
+    hallazgos_de_metadatos,
+    unidad,
+)
 
 W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 
@@ -324,6 +330,15 @@ class ManejadorDocx(ManejadorFormato):
                     return
             nuevo.add_paragraph(texto)
 
+        opciones = getattr(contexto, "opciones", None)
+        aviso = aviso_documento(opciones)
+        if aviso:
+            sello = nuevo.add_paragraph()
+            corrida = sello.add_run(aviso)
+            corrida.bold = True
+            corrida.font.size = Pt(9)
+            partes_texto.append(aviso)
+
         for bloque in extraido.info.get("estructura", []):
             if bloque["tipo"] == "parrafo":
                 u = mapa.get(bloque["uid"])
@@ -370,7 +385,7 @@ class ManejadorDocx(ManejadorFormato):
 
         # propiedades neutras
         cp = nuevo.core_properties
-        cp.author = ""
+        cp.author = str(getattr(opciones, "autor_salida", "") or "")
         cp.last_modified_by = ""
         cp.title = "Documento desidentificado"
         cp.subject = ""

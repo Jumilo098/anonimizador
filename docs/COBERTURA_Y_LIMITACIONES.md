@@ -32,6 +32,7 @@ Entorno de verificación: Windows 11, Python 3.12.4, sin Tesseract instalado.
 | Expediente de auditoría | `IMPLEMENTADO` | `audit.json`, `transformation_matrix.csv`, `integrity_report.json`, `adversarial_scan.json`, `audit_report.html`, `RESUMEN.md`. |
 | Interfaz para no técnicos | `IMPLEMENTADO` | Streamlit local: arrastrar → finalidad → ANALIZAR → GENERAR → aprobar/rechazar. |
 | Expediente multi-archivo | `IMPLEMENTADO` | Varios archivos se procesan juntos; **cada uno con su propia auditoría** (los seudónimos no se comparten entre archivos, ver limitaciones). |
+| Modo entrega (autor, nombre neutro, sello visible) | `IMPLEMENTADO` | Se puede fijar el autor del archivo, el nombre de salida y estampar dentro del documento *"VERSIÓN MINIMIZADA SUJETA A REVISIÓN Y APROBACIÓN HUMANA"*. Si se escribe un autor real, se reporta como **autoría declarada**: es un identificador del preparador. |
 | Modo demostración | `IMPLEMENTADO` | 5 casos sintéticos generados al vuelo, sin ningún dato real. |
 | Capa de IA opcional | `NO IMPLEMENTADO` (a propósito) | Existe la interfaz `ProveedorLLM`, apagada y sin ninguna implementación. V1 es 100 % determinista. |
 
@@ -167,7 +168,7 @@ y de gobierno del dato que no le corresponden a una herramienta.
 ## Cómo comprobar usted mismo lo que dice este documento
 
 ```bash
-python -m pytest tests -q          # 49 pruebas
+python -m pytest tests -q          # 54 pruebas
 python -m anonimizador.cli --demo  # procesa los 5 casos sintéticos e imprime los veredictos
 ```
 

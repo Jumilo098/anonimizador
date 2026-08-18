@@ -22,7 +22,12 @@ from reportlab.pdfgen import canvas as rl_canvas
 from ..config import MAX_PDF_PAGES
 from ..models import Alerta, Capa, DocumentoExtraido
 from . import codigos
-from .base import ManejadorFormato, hallazgos_de_metadatos, unidad
+from .base import (
+    ManejadorFormato,
+    aviso_documento,
+    hallazgos_de_metadatos,
+    unidad,
+)
 
 rl_config.invariant = 1  # sin fecha de creacion real: no filtramos cuando se proceso
 
@@ -232,21 +237,33 @@ class ManejadorPdf(ManejadorFormato):
         margen = 2 * cm
         fuente, tamano, interlineado = "Helvetica", 10, 13.5
         c = rl_canvas.Canvas(str(destino), pagesize=A4)
+        opciones = getattr(contexto, "opciones", None)
+        aviso = aviso_documento(opciones)
         c.setTitle("Documento desidentificado")
-        c.setAuthor("")
+        c.setAuthor(str(getattr(opciones, "autor_salida", "") or ""))
         c.setSubject("")
         c.setKeywords("")
         c.setCreator("ANONIMIZADOR")
 
         esperado = []
 
+        def sello():
+            """Aviso visible en cada pagina, fuera del cuerpo del texto."""
+            if not aviso:
+                return
+            c.setFont("Helvetica-Bold", 7.5)
+            c.drawString(margen, alto - margen + 14, aviso)
+            c.setFont(fuente, tamano)
+
         def escribir_lineas(lineas):
             y = alto - margen
+            sello()
             c.setFont(fuente, tamano)
             for linea in lineas:
                 for trozo in _envolver(linea, ancho - 2 * margen, fuente, tamano):
                     if y < margen:
                         c.showPage()
+                        sello()
                         c.setFont(fuente, tamano)
                         y = alto - margen
                     c.drawString(margen, y, trozo)
@@ -256,6 +273,8 @@ class ManejadorPdf(ManejadorFormato):
         for u in paginas:
             texto = u.texto or ""
             esperado.append(texto)
+            if aviso:
+                esperado.append(aviso)
             escribir_lineas(texto.split("\n"))
 
         anexos = [u for u in unidades_nuevas

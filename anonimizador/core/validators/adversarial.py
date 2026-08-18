@@ -32,7 +32,7 @@ MODULO_POR_CAPA = {
 
 
 def escanear(ruta_resultado, manejador, transformaciones, valores_originales=None,
-             valores_generados=None):
+             valores_generados=None, autor_declarado=""):
     """Reanaliza el resultado como si quisieramos reidentificar al paciente.
 
     valores_originales: textos crudos que DEBIAN desaparecer (solo memoria).
@@ -61,6 +61,7 @@ def escanear(ruta_resultado, manejador, transformaciones, valores_originales=Non
         "metadatos_residuales": {},
         "codigos_graficos_residuales": [],
         "capas_revisadas": [],
+        "autoria_declarada": None,
         "veredicto": "PASS",
     }
 
@@ -87,6 +88,17 @@ def escanear(ruta_resultado, manejador, transformaciones, valores_originales=Non
         if not texto:
             continue
         if _metadato_neutro(clave, texto):
+            continue
+        if autor_declarado and plegar(texto) == plegar(autor_declarado):
+            # No es una fuga: es la autoria que el usuario pidio escribir.
+            # Aun asi se reporta aparte, porque identifica a quien preparo el
+            # material y viaja dentro del archivo.
+            informe["autoria_declarada"] = {
+                "campo": clave,
+                "valor": texto,
+                "nota": "identifica a quien preparo el material, no al paciente; "
+                        "se escribio porque se pidio de forma explicita",
+            }
             continue
         informe["metadatos_residuales"][clave] = enmascarar(texto)
 

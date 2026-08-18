@@ -98,6 +98,16 @@ FINALIDADES: dict[str, Finalidad] = {
         generalizar_edad=False,
         notas="La edad exacta se conserva porque puede alterar la interpretacion.",
     ),
+    "docencia_sintetica": Finalidad(
+        clave="docencia_sintetica",
+        nombre="Docencia con material declarado sintetico",
+        descripcion=(
+            "Caso construido para ensenar, sin paciente detras. Se minimiza "
+            "igual que en educacion, y el archivo se sella como SINTETICO para "
+            "que nadie lo confunda con un documento asistencial."
+        ),
+        notas="El sello no convierte en sintetico un documento real.",
+    ),
     "investigacion": Finalidad(
         clave="investigacion",
         nombre="Investigacion / dataset interno",
@@ -124,6 +134,16 @@ ESTADO_TEXTO = (
     "Existe riesgo residual. Requiere revision humana antes de compartir."
 )
 
+# Sello que se escribe DENTRO del documento generado, visible al abrirlo.
+# Nunca dice "anonimizado", "irreversible" ni "riesgo cero".
+AVISO_EN_DOCUMENTO = (
+    "VERSION MINIMIZADA SUJETA A REVISION Y APROBACION HUMANA."
+)
+AVISO_EN_DOCUMENTO_SINTETICO = (
+    "DOCUMENTO CLINICO SINTETICO. VERSION MINIMIZADA SUJETA A REVISION "
+    "Y APROBACION HUMANA."
+)
+
 APP_VERSION = __version__
 
 
@@ -143,6 +163,15 @@ class Opciones:
     # borrar a ciegas una palabra capitalizada puede destrozar un termino
     # clinico que no este en el lexico (marca de un farmaco, epinimo...).
     sustituir_posibles_nombres: bool = False
+    # --- entrega ---------------------------------------------------------
+    # Autor que quedara en las propiedades del archivo generado. OJO: es un
+    # identificador de QUIEN PREPARO el material, no del paciente; se escribe
+    # solo si alguien lo pide de forma explicita.
+    autor_salida: str = ""
+    # Aviso visible dentro del documento (bloque 33 del protocolo).
+    estampar_aviso: bool = True
+    # Nombre del archivo generado, sin extension. Debe ser neutro.
+    nombre_salida: str = "documento_desidentificado"
     conservar_copia_trabajo: bool = True
     etiquetas_personalizadas: dict = field(default_factory=dict)
 

@@ -13,7 +13,12 @@ from openpyxl import Workbook, load_workbook
 from ..util.hashing import normalizar
 
 from ..models import Alerta, Capa, DocumentoExtraido
-from .base import ManejadorFormato, hallazgos_de_metadatos, unidad
+from .base import (
+    ManejadorFormato,
+    aviso_documento,
+    hallazgos_de_metadatos,
+    unidad,
+)
 
 CAMPOS_PROPS = [
     "creator", "title", "description", "subject", "identifier", "language",
@@ -153,8 +158,9 @@ class ManejadorXlsx(ManejadorFormato):
         if not wb.worksheets:
             wb.create_sheet(title="Hoja")
 
+        opciones = getattr(contexto, "opciones", None)
         props = wb.properties
-        props.creator = ""
+        props.creator = str(getattr(opciones, "autor_salida", "") or "")
         props.lastModifiedBy = ""
         props.title = "Libro desidentificado"
         props.description = "Generado por ANONIMIZADOR. Requiere revision humana."
@@ -164,6 +170,11 @@ class ManejadorXlsx(ManejadorFormato):
         props.identifier = ""
         props.language = ""
         props.contentStatus = "DESIDENTIFICADO - PENDIENTE DE REVISION"
+        aviso = aviso_documento(opciones)
+        if aviso and wb.worksheets:
+            wb.worksheets[0].insert_rows(1)
+            wb.worksheets[0]["A1"] = aviso
+            esperado.insert(0, aviso)
         props.revision = None
         neutro = datetime(2000, 1, 1, 0, 0, 0)
         props.created = neutro

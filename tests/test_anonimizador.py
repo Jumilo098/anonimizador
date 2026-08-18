@@ -533,6 +533,71 @@ def test_regresion_adversarial_si_detecta_una_fuga_real(tmp_path):
     assert not _aparece("Cali", plegar("Dolor poco localizado. [LOCALIDAD]"))
 
 
+# ---------------------------------------------------------------------------
+# Modo entrega: sello visible, autoria declarada y nombre neutro
+# ---------------------------------------------------------------------------
+@pytest.fixture(scope="session")
+def entrega(muestras, tmp_path_factory):
+    opciones = config.Opciones(
+        finalidad="docencia_sintetica",
+        autor_salida="Sergio Naza",
+        nombre_salida="Documento_clinico_sintetico_minimizado_revision_humana",
+    )
+    salida = {}
+    for nombre in ("caso_02_historia_clinica.docx", "caso_03_informe_patologia.pdf",
+                   "caso_01_nota_evolucion.txt"):
+        salida[nombre] = pipeline.procesar(muestras[nombre], opciones=opciones)
+    return salida
+
+
+def test_entrega_nombre_de_archivo_neutro(entrega):
+    for nombre, r in entrega.items():
+        assert r.ok, r.error
+        archivo = Path(r.archivos["resultado"]).name
+        assert archivo.startswith("Documento_clinico_sintetico_minimizado")
+        for identificador in ("Lopez", "0099887", "52123456", "caso_02"):
+            assert identificador not in archivo
+
+
+def test_entrega_sello_visible_en_el_documento(entrega):
+    for nombre, r in entrega.items():
+        texto = texto_de_salida(r)
+        assert "SUJETA A REVISION Y APROBACION HUMANA" in texto, nombre
+        assert "DOCUMENTO CLINICO SINTETICO" in texto, nombre
+
+
+def test_entrega_el_sello_no_promete_anonimizacion(entrega):
+    prohibidas = ["anonimizad", "riesgo cero", "irreversib", "garantiz",
+                  "100 %", "100%"]
+    for nombre, r in entrega.items():
+        sello = config.AVISO_EN_DOCUMENTO_SINTETICO.lower()
+        for palabra in prohibidas:
+            assert palabra not in sello
+        html = Path(r.archivos["html"]).read_text(encoding="utf-8").lower()
+        assert "riesgo cero" not in html
+
+
+def test_entrega_autoria_declarada_se_reporta_y_no_es_fuga(entrega):
+    """Escribir un autor real es meter un identificador: hay que declararlo."""
+    for nombre, r in entrega.items():
+        adv = r.adversarial
+        assert adv["fugas"] == [], nombre
+        if Path(r.archivos["resultado"]).suffix in (".docx", ".pdf"):
+            declarada = adv.get("autoria_declarada")
+            assert declarada, nombre + ": la autoria no quedo registrada"
+            assert declarada["valor"] == "Sergio Naza"
+            assert "no al paciente" in declarada["nota"]
+
+
+def test_entrega_sin_autor_no_deja_rastro_de_persona(muestras):
+    r = pipeline.procesar(muestras["caso_02_historia_clinica.docx"])
+    import docx
+
+    props = docx.Document(r.archivos["resultado"]).core_properties
+    assert (props.author or "") == ""
+    assert r.adversarial.get("autoria_declarada") is None
+
+
 def test_pdf_escaneado_se_marca_no_evaluable(tmp_path):
     """Un PDF sin texto extraible NO puede pasar por bueno."""
     from PIL import Image, ImageDraw
